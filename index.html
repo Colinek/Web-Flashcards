@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Add jQuery library (required) -->
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+
+  <!-- Add the Moment date parser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+  <title>Polish | People</title>
+  <style media="screen">
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@100&display=swap');
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+      font-family: 'Montserrat Alternates', sans-serif;
+    }
+
+    #activityTitle {
+      text-align: center;
+      font-weight: bold;
+      font-size: 32px;
+      margin-top: 50px;
+    }
+
+    label {
+      font-size: 32px;
+    }
+
+    #drop-down {
+      text-align: center;
+      font-size: 28px;
+      margin-top: 50px;
+      font-family: 'Montserrat Alternates', sans-serif;
+    }
+
+    select {
+      font-size: 28px;
+      border-radius: 10px;
+      font-family: 'Montserrat Alternates', sans-serif;
+      text-align: center;
+    }
+
+    #cardArea {
+      width: 350px;
+      height: 200px;
+      margin: auto;
+      margin-top: 80px;
+      border: 3px solid #ABB7B7;
+      border-radius: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 350px;
+      height: 200px;
+      position: absolute;
+      text-align: center;
+      /* line-height: 200px; */
+      font-size: 45px;
+      color: #efefef;
+      cursor: pointer;
+      white-space: normal;
+      overflow: hidden; /* Ensures text stays within the border */
+      word-wrap: break-word;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+
+    #buttonArea {
+      margin-top: 40px;
+      text-align: center;
+    }
+
+    #nextButton {
+      width: 80px;
+      text-align: center;
+      font-size: 20px;
+      padding: 10px;
+      cursor: pointer;
+      color: #efefef;
+      margin: auto;
+      margin-top: 30px;
+      background-color: #019875;
+      border: 2px solid #1E824C;
+      border-radius: 5px;
+      display: inline;
+      margin-left: 10px;
+    }
+
+    #nextButton:hover,
+    #backButton:hover {
+      opacity: .6;
+    }
+
+    #backButton {
+      width: 80px;
+      text-align: center;
+      font-size: 20px;
+      padding: 10px;
+      cursor: pointer;
+      color: #efefef;
+      margin: auto;
+      margin-top: 30px;
+      background-color: #980101;
+      border: 2px solid #821e1e;
+      border-radius: 5px;
+      display: inline;
+      margin-right: 10px;
+    }
+
+    #finalMessage {
+      text-align: center;
+      font-size: 30px;
+      margin-top: 30px;
+    }
+
+    /* Use a media query to add a breakpoint at 800px: */
+    @media screen and (max-width: 800px) {
+      #cardArea,
+      .card {
+        width: 100%;
+        /* The width is 100%, when the viewport is 800px or smaller */
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Title -->
+  <div id="activityTitle">Polish / English Flashcards</div>
+
+  <!-- Dropdown for selecting sheets -->
+  <div id="drop-down">
+    <form>
+      <label for="sheetDropdown">Choose a sheet:</label>
+      <!-- Dropdown options populated dynamically -->
+      <select id="sheetDropdown" name="sheetDropdown"></select>
+    </form>
+  </div>
+
+  <!-- Container for displaying flashcards -->
+  <div id="cardArea"></div>
+
+  <!-- Container for navigation buttons -->
+  <div id="buttonArea"></div>
+
+  <!-- JavaScript code -->
+  <script type="text/javascript">
+    $(function() {
+      var colorArray = ["#019875", "#1E8BC3", "#D91E18", "#D35400", "#8E44AD", "#C0392B"];
+      var cardState;
+      var currentQuestion = 0;
+      var qbank = new Array;
+
+      // url of the published Google Shhet (Share entire Document to the web)
+      // Instructions in the Read Me
+      
+      const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-XXX";
+
+      // Function to extract the URL of the Google Sheet
+      fetch(sheetUrl)
+        .then(response => response.text())
+        .then(data => {
+          const sheetNames = extractSheetInfo(data);
+
+          // enter the base URL (from Sharing as a CSV)
+          const baseUrl = '2PACX-1vQmcANOHhOvmo4hb7XXXX/pub?gid=';
+
+          const sheetUrls = sheetNames.map(id => baseUrl + id);
+
+          // Populate the dropdown with sheet names
+          populateDropdown(sheetNames);
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+
+      // Function to extract sheet names and their corresponding URLs
+      function extractSheetInfo(htmlData) {
+        const sheets = [];
+        const regex = /<li id="sheet-button-\d+"><a href="#">([^<]+)<\/a><\/li>/g;
+        const baseIdRegex = /switchToSheet\('(\d+)'\)/g;
+        let match;
+
+        while ((match = regex.exec(htmlData)) !== null) {
+          let tabName = match[1];
+          let tabIdMatch = baseIdRegex.exec(htmlData);
+          if (tabIdMatch) {
+            let tabId = tabIdMatch[1];
+
+          // again - you need to get the URL for the shared CSV 
+            let tabUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1XXX/pub?gid=${tabId}&single=true&output=csv`;
+            sheets.push({ name: tabName, url: tabUrl });
+         
+          }
+        }
+
+        return sheets;
+      }
+
+      // Function to populate the dropdown with sheet names
+      function populateDropdown(sheetOptions) {
+        var dropdown = $('#sheetDropdown');
+        dropdown.empty();
+
+        for (var i = 0; i < sheetOptions.length; i++) {
+          dropdown.append($('<option></option>').attr('value', sheetOptions[i].url).text(sheetOptions[i].name));
+        }
+
+        // Trigger change event when dropdown value changes
+        dropdown.trigger('change');
+      }
+
+      // Event handler for dropdown change
+      $("#sheetDropdown").on('change', function() {
+        // Parse JSON data from the selected sheet
+        parseJSON(this.value);
+      });
+
+      // Function to parse JSON data from the selected sheet
+      function parseJSON(sheetURL) {
+        console.log(sheetURL);
+        qbank = [];
+        // Using jQuery to load the results
+        Papa.parse(sheetURL, {
+          download: true,
+          complete: function(result) {
+            if (result.data && result.data.length > 0) {
+              console.log(result.data);
+              const myArr = result.data;
+            }
+
+            let output = [];
+            let input = result.data;
+            let tmp;
+
+            for (let i = 0; i < input.length; i++) {
+              tmp = {
+                "cardfront": input[i][0],
+                "cardback": input[i][1]
+              };
+              output.push(tmp);
+            }
+
+            for (i = 0; i < output.length; i++) {
+              qbank[i] = [];
+              qbank[i][0] = output[i].cardfront;
+              qbank[i][1] = output[i].cardback;
+            } // for
+
+            currentQuestion = 0;
+            beginActivity();
+          }
+        });
+      } // end parseJSON
+
+      // Function to initialize flashcard activity
+      function beginActivity() {
+        cardState = 0;
+        var color1 = colorArray[Math.floor(Math.random() * colorArray.length)];
+        $("#cardArea").empty();
+        $("#cardArea").append('<div id="card1" class="card">' + qbank[currentQuestion][0] + '</div>');
+        $("#cardArea").append('<div id="card2" class="card">' + qbank[currentQuestion][1] + '</div>');
+        $("#card1").css("background-color", color1);
+        $("#card2").css("background-color", "#34495E");
+        $("#card2").css("top", "200px");
+
+        // Function to set styles for card2 based on text length
+        function setCard2Styles() {
+          var card2Text = qbank[currentQuestion][1];
+          var textLength = card2Text.length;
+
+          // Set maximum length before adjusting styles
+          var maxLengthBeforeAdjust = 35;
+
+          // Adjust styles if text length exceeds maximum
+          console.log("Length: ",textLength);
+          if (textLength > maxLengthBeforeAdjust) {
+            var fontSize = 45 - (textLength - maxLengthBeforeAdjust) * 1.02; // Adjust the factor as needed
+            console.log(fontSize);
+            // var lineHeight = 1 - (textLength - maxLengthBeforeAdjust) * 0.04; // Adjust the factor as needed
+
+            $("#card2").css({
+              "font-size": fontSize + "px",
+              // "line-height": lineHeight
+            });
+          }
+        }
+          // Set styles for card2 based on text length
+          setCard2Styles();
+
+
+        $("#cardArea").on("click", function() {
+          if (cardState != 1) {
+            cardState = 1;
+            $("#card1").animate({
+              top: "-=200"
+            }, 150, function() {
+              cardState = 0;
+              togglePosition();
+            });
+            $("#card2").animate({
+              top: "-=200"
+            }, 150, function() {
+              togglePosition2();
+            });
+          } // if
+        }); // click function
+
+        $("#buttonArea").empty();
+        $("#buttonArea").append('<div id="backButton">BACK</div>');
+        $("#buttonArea").append('<div id="nextButton">NEXT</div>');
+
+        $("#nextButton").on("click", function() {
+          if (currentQuestion < (qbank.length - 1)) {
+            currentQuestion++;
+          } else {
+            // Reset to the first flashcard when reaching the end
+            currentQuestion = 0;
+          }
+          beginActivity();
+        });
+
+        $("#backButton").on("click", function() {
+          if (currentQuestion > 0) {
+            currentQuestion--;
+          } else {
+            // Wrap to the last flashcard when going back from the first
+            currentQuestion = qbank.length - 1;
+          }
+          beginActivity();
+        });
+      } // beginActivity
+
+      // Function to toggle position of card1
+      function togglePosition() {
+        if ($("#card1").position().top == -200) {
+          $("#card1").css("top", "200px");
+        };
+      } // toggle
+
+      // Function to toggle position of card2
+      function togglePosition2() {
+        if ($("#card2").position().top == -200) {
+          $("#card2").css("top", "200px");
+        };
+      } // toggle2
+
+      // Function to display final message
+      function displayFinalMessage() {
+        $("#buttonArea").empty();
+        $("#cardArea").empty();
+        $("#cardArea").append('<div id="finalMessage">You have finished the activity.</div>');
+      } // final message
+
+    });
+  </script>
+
+</body>
+
+</html>
