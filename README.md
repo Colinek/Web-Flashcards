@@ -37,17 +37,19 @@ Paste the result into Line 169:
 
 
 Then, still in the Publish to the Web window:  
-1st_Tab_in_Spreadsheet | Comma-separated values (.csv)
+1st_Tab_in_Spreadsheet | Comma-separated values (.csv)  
 **[Publish]**
 
-Copy the link that appears. Trim the beginning (up to 2PACX), the end (after/pub?gid=) and paste it into Line 176:
+Copy the link that appears. Trim the beginning (up to 2PACX), the end (after/pub?gid=) and paste it into Line 176:  
 `const baseUrl = "2PACX-1xx2qq ... /pub?gid=";`
 
 
 Using the same csv Link, paste the code into Line 199
-Remove the number (first TAB on Spreadsheet is '0'; second TAB is about 10 digits long) between pub?gid=   and  &single=true&output=csv
+Remove the number  
+(first TAB on Spreadsheet is '0'; second TAB is about 10 digits long)  
+between pub?gid=   and  &single=true&output=csv
 
-Line 199:
+Line 199:  
 ``let tabUrl = `https ://docs.google.com/spreadsheets/d/e/2PACX-1xx2qq ... /pub?gid=${tabId}&single=true&output=csv`;``
 
 
